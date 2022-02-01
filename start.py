@@ -35,11 +35,13 @@ time.sleep(0.5)
 
 
 # ID 입력
-xpath_send_keys("//input[@id='id']", "아이디")
+id = "ces1"
+xpath_send_keys("//input[@id='id']", id)
 
 
 # Password 입력
-xpath_send_keys("//input[@id='password']", "비밀번호")
+pw = "1q2w3e4r!"
+xpath_send_keys("//input[@id='password']", pw)
 time.sleep(0.5)
 
 
@@ -101,15 +103,11 @@ for url in patient_url_list:
 
     # 차팅 내용 입력
     charting = "차팅내용"
-    charting_area_xpath = "//textarea[@id='memoContent']"
-    charting_area = driver.find_element(By.XPATH, charting_area_xpath)
-    charting_area.send_keys(charting)
+    xpath_send_keys("//textarea[@id='memoContent']", charting)
 
     # 차팅 시간
     charting_time = "2022-02-02 19:00"  # ex) 2022-02-02 19:00
-    time_input_xpath = "//input[@id='eventDateTime3']"
-    time_input = driver.find_element(By.XPATH, time_input_xpath)
-    time_input.send_keys(charting_time)
+    xpath_send_keys("//input[@id='eventDateTime3']", charting_time)
 
     # 차팅 저장 -------주의!!!!!!!_----------
     # xpath_click("//button[@id='medicalMemo']")
@@ -119,5 +117,5 @@ for url in patient_url_list:
 
     time.sleep(2)
 
-print("차팅 횟수 : %d", cnt)
+print("차팅 횟수 : %d" % cnt)
 
