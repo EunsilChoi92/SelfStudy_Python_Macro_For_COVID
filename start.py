@@ -3,6 +3,17 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 import time
+import os, sys
+
+
+# pyinstaller
+# chromedriver가 컴퓨터에 있는지 확인
+# Terminal에 pyinstaller --add-binary "chromedriver.exe;." start.py
+if getattr(sys, 'frozen', False):
+    chromedriver_path = os.path.join(sys._MEIPASS, "chromedriver.exe")
+    driver = webdriver.Chrome(chromedriver_path)
+else:
+    driver = webdriver.Chrome()
 
 
 # 어떤 요소가 존재하는지 확인하기 위한 함수
@@ -27,7 +38,7 @@ def xpath_click(xpath):
 
 
 
-driver = webdriver.Chrome('D:/temp/chromedriver.exe')
+# driver = webdriver.Chrome('D:/temp/chromedriver.exe')
 
 url = 'https://hcms.mohw.go.kr/'
 driver.get(url)
