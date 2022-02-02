@@ -35,12 +35,12 @@ time.sleep(0.5)
 
 
 # ID 입력
-id = "ces1"
+id = "아이디"
 xpath_send_keys("//input[@id='id']", id)
 
 
 # Password 입력
-pw = "1q2w3e4r!"
+pw = "비번"
 xpath_send_keys("//input[@id='password']", pw)
 time.sleep(0.5)
 
@@ -89,33 +89,55 @@ patient_list = driver.find_elements(By.XPATH, patient_list_xpath)
 
 # 환자 리스트에서 환자번호 추출해서 각 환자의 개인차트 url을 리스트에 저장
 patient_url_list = []
-
-for element in patient_list:
-    patient_url = element.get_attribute("data-url")[1:]
+for element_patient in patient_list:
+    patient_url = element_patient.get_attribute("data-url")[1:]
     final_url = "https://hcms.mohw.go.kr/clinic" + patient_url +"&refererPage=1#medicalMemoSection"
     patient_url_list.append(final_url)
 
 
 # 리스트에 저장된 url로 이동 후 차팅
 cnt = 0     # 카운트(나중에 재원 환자 수와 맞는지 확인할 것)
+patient_list_charted = []  # 차팅한 환자 이름 리스트
+
 for url in patient_url_list:
     driver.get(url)
 
-    # 차팅 내용 입력
-    charting = "차팅내용"
-    xpath_send_keys("//textarea[@id='memoContent']", charting)
+    # 차팅 여부 확인
+    charting_time = "2022-02-02 20:00"  # ex) 2022-02-02 19:00
+    check = True
 
-    # 차팅 시간
-    charting_time = "2022-02-02 19:00"  # ex) 2022-02-02 19:00
-    xpath_send_keys("//input[@id='eventDateTime3']", charting_time)
+    chart_table = driver.find_element(By.ID, "memoDataTable")   # 차트 테이블
+    child_td = chart_table.find_elements(By.TAG_NAME, "td")     # 차트 테이블의 자식 요소들 중에서 td 태그를 가진 요소들
 
-    # 차팅 저장 -------주의!!!!!!!_----------
-    # xpath_click("//button[@id='medicalMemo']")
+    # 같은 차팅 시간이 이미 존재하면 False로 바뀜
+    for td in child_td:
+        text = td.get_attribute('innerText')
+        if text == charting_time:
+            check = False
+            break
 
-    # 카운트
-    cnt += 1
+    if check:
+        # 차팅 내용 입력
+        charting = "차팅내용"
+        xpath_send_keys("//textarea[@id='memoContent']", charting)
+
+        # 차팅 시간
+        xpath_send_keys("//input[@id='eventDateTime3']", charting_time)
+
+        # 차팅 저장 -------주의!!!!!!!_----------
+        # xpath_click("//button[@id='medicalMemo']")
+
+        # 카운트
+        cnt += 1
+
+        # 차팅한 환자 주소 추가
+        patient_list_charted.append(url)
 
     time.sleep(2)
 
+print("-----------차팅한 환자 url-----------")
+for patient_charted in patient_list_charted:
+    print(patient_charted)
+print("---------차팅한 환자 url 끝---------")
 print("차팅 횟수 : %d" % cnt)
 
