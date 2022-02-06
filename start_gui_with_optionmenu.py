@@ -1,3 +1,5 @@
+from tkinter import _setit
+
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -9,7 +11,7 @@ import os, sys
 
 
 # pyinstaller
-# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui.py
+# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui_with_optionmenu.py
 # onefile은 에러 자주 나서 생략하는 게 좋을듯
 
 
@@ -80,6 +82,29 @@ pw_label.pack()
 pw_ent = Entry(win)
 pw_ent.pack()
 
+
+
+
+def add_list(list, start, end):
+    for i in range(start, end+1):
+        list.append(i)
+
+def change_day_list(end):
+    day_list.clear()
+    add_list(day_list, 1, end)
+    chart_time_day['menu'].delete(0, 'end')
+    for day in day_list:
+        chart_time_day['menu'].add_command(label=day, command=_setit(day_var, day))
+
+def my_show(*args):
+    if month_var.get() == "2":
+        change_day_list(28)
+    elif month_var.get() == "1" or "3" or "5" or "7" or "8" or "10" or "12":
+        change_day_list(31)
+    else:
+        change_day_list(30)
+
+
 # 차팅 시간 라벨 "2022-02-06 19:00"
 chart_time_label = Label(win)
 chart_time_label.config(text="차팅시간")
@@ -92,9 +117,7 @@ day_list = [0]
 hour_list = []
 minute_list = ["00", "30"]
 
-def add_list(list, start, end):
-    for i in range(start, end+1):
-        list.append(i)
+
 
 # 차팅 시간 드롭다운(연도)
 year_var = StringVar(win)
@@ -115,28 +138,19 @@ chart_time_month = OptionMenu(win, month_var, *month_list)
 chart_time_month.config(width=90, font=("궁서", 12))
 chart_time_month.config(bg="white")
 
-
-def my_show(*args):
-    if month_var.get() == "2":
-        print("2월!")
-        day_list.clear()
-        add_list(day_list, 1, 28)
-        day_var.set(day_list)
-
 month_var.trace('w', my_show)
 
 chart_time_month.pack()
 
 
 # 차팅 시간 입력칸(일)
-
-
 day_var = StringVar(win)
 day_var.set("일")
 
 chart_time_day = OptionMenu(win, day_var, *day_list)
 chart_time_day.config(width=90, font=("궁서", 12))
 chart_time_day.config(bg="white")
+chart_time_day.config()
 chart_time_day.pack()
 
 # 차팅 시간 입력칸(시)
@@ -158,6 +172,9 @@ chart_time_minute = OptionMenu(win, minute_var, *minute_list)
 chart_time_minute.config(width=90, font=("궁서", 12))
 chart_time_minute.config(bg="white")
 chart_time_minute.pack()
+
+
+
 
 # 차팅 내용 라벨
 chart_content_label = Label(win)
