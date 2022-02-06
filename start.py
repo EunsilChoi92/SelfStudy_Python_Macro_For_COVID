@@ -8,7 +8,7 @@ import os, sys
 
 # pyinstaller
 # chromedriver가 컴퓨터에 있는지 확인
-# Terminal에 pyinstaller --add-binary "chromedriver.exe;." start.py
+# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui.py
 if getattr(sys, 'frozen', False):
     chromedriver_path = os.path.join(sys._MEIPASS, "chromedriver.exe")
     driver = webdriver.Chrome(chromedriver_path)
@@ -114,7 +114,7 @@ for url in patient_url_list:
     driver.get(url)
 
     # 차팅 여부 확인
-    charting_time = "2022-02-02 20:00"  # ex) 2022-02-02 19:00
+    charting_time = "2022-02-06 19:00"  # ex) 2022-02-02 19:00
     check = True
 
     chart_table = driver.find_element(By.ID, "memoDataTable")   # 차트 테이블
@@ -129,14 +129,14 @@ for url in patient_url_list:
 
     if check:
         # 차팅 내용 입력
-        charting = "차팅내용"
+        charting = "체온 측정 후 앱에 등록함.\n특이 호소 없음."
         xpath_send_keys("//textarea[@id='memoContent']", charting)
 
         # 차팅 시간
         xpath_send_keys("//input[@id='eventDateTime3']", charting_time)
 
         # 차팅 저장 -------주의!!!!!!!_----------
-        # xpath_click("//button[@id='medicalMemo']")
+        xpath_click("//button[@id='medicalMemo']")
 
         # 카운트
         cnt += 1
