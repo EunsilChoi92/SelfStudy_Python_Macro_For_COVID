@@ -8,7 +8,7 @@ import os, sys
 
 # pyinstaller
 # chromedriver가 컴퓨터에 있는지 확인
-# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui.py
+# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui_with_optionmenu.py
 if getattr(sys, 'frozen', False):
     chromedriver_path = os.path.join(sys._MEIPASS, "chromedriver.exe")
     driver = webdriver.Chrome(chromedriver_path)
@@ -114,7 +114,7 @@ for url in patient_url_list:
     driver.get(url)
 
     # 차팅 여부 확인
-    charting_time = "2022-02-06 19:00"  # ex) 2022-02-02 19:00
+    charting_time = "2022-02-07 19:00"  # ex) 2022-02-02 19:00
     check = True
 
     chart_table = driver.find_element(By.ID, "memoDataTable")   # 차트 테이블
