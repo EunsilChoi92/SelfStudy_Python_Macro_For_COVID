@@ -8,7 +8,7 @@ from tkinter.ttk import *
 import time
 import os, sys
 from bs4 import BeautifulSoup
-
+import json
 
 
 # pyinstaller
@@ -58,6 +58,7 @@ id_label.pack()
 
 # 아이디 입력칸
 id_ent = Entry(win)
+id_ent.insert(0, "ces1") # 지울거
 id_ent.pack()
 
 # 비밀번호 라벨
@@ -67,6 +68,7 @@ pw_label.pack()
 
 # 비밀번호 입력칸
 pw_ent = Entry(win)
+pw_ent.insert(0, "1q2w3e4r!")   # 지울거
 pw_ent.pack()
 
 
@@ -114,6 +116,7 @@ year_var = StringVar(win)
 
 chart_time_year = Combobox(win)
 chart_time_year.config(values=year_list)
+chart_time_year.insert(0, '2022') # 지울거
 chart_time_year.pack()
 
 # 차팅 시간 콤보박스(월)
@@ -123,12 +126,14 @@ month_var = StringVar(win)
 chart_time_month = Combobox(win)
 chart_time_month.config(values=month_list)
 chart_time_month.bind("<<ComboboxSelected>>", change_day_combobox)
+chart_time_month.insert(0, '02') # 지울거
 chart_time_month.pack()
 
 # 차팅 시간 콤보박스(일)
 day_var = StringVar(win)
 
 chart_time_day = Combobox(win)
+chart_time_day.insert(0, '08')  # 지울거
 chart_time_day.pack()
 
 # 차팅 시간 콤보박스(시)
@@ -137,6 +142,7 @@ hour_var = StringVar(win)
 
 chart_time_hour = Combobox(win)
 chart_time_hour.config(values=hour_list)
+chart_time_hour.insert(0, '19') # 지울거
 chart_time_hour.pack()
 
 # 차팅 시간 콤보박스(분)
@@ -144,6 +150,7 @@ minute_var = StringVar(win)
 
 chart_time_minute = Combobox(win)
 chart_time_minute.config(values=minute_list)
+chart_time_minute.insert(0, '00')    # 지울거
 chart_time_minute.pack()
 
 
@@ -210,22 +217,18 @@ def get_patient_list():
 
 def update_session():
     session = requests.Session()
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36 Edg/96.0.1054.62'
     }
-
     session.headers.update()
     for cookie in driver.get_cookies():
         c = {cookie['name']: cookie['value']}
         session.cookies.update(c)
-
     return session
 
 def check_chart(soup):
     chart_table = soup.find("table", {'id': 'memoDataTable'})
     chart_td = chart_table.find_all("td")
-
     for td in chart_td:
         text = td.get_text()
         if text == final_charting_time:
@@ -241,8 +244,31 @@ def chart():
     final_charting_time = make_charting_time()
 
     # 여기서부터 for문 돌려야됨
-    response = update_session().get(patient_url_list[0])
+    session = update_session()
+    response = session.get(patient_url_list[0])
     soup = BeautifulSoup(response.text, "html.parser")
+
+    mPatientIdx = soup.find("input", {"id": "patientIdx"}).get('value')
+    recordedByName = soup.find("input", {"class": "form-control"}).get('value')
+    recordedById = id_ent.get()
+
+    print(mPatientIdx)
+    print(recordedByName)
+    print(recordedById)
+
+    datas = {
+        'patientIdx': mPatientIdx,
+        'contents': chart_content_ent.get(),
+        'recordedDate': final_charting_time,
+        'recordedByName': recordedByName,
+        'recordedById': recordedById
+    }
+
+    url = patient_url_list[0] + "/api/memoData"
+
+    response = session.post(url, params=json.dumps(datas))
+    # print(response.request.__getattribute__("params"))
+    print(response.url)
 
     if check_chart(soup):
         #차팅보내기
