@@ -243,38 +243,39 @@ def chart():
     global final_charting_time
     final_charting_time = make_charting_time()
 
-    # 여기서부터 for문 돌려야됨
     session = update_session()
-    response = session.get(patient_url_list[0])
-    soup = BeautifulSoup(response.text, "html.parser")
 
-    mPatientIdx = soup.find("input", {"id": "patientIdx"}).get('value')
-    recordedByName = soup.find("input", {"class": "form-control"}).get('value')
-    recordedById = id_ent.get()
+    response = session.get("https://hcms.mohw.go.kr/clinic/api/state")
 
-    print(mPatientIdx)
-    print(recordedByName)
-    print(recordedById)
+    for p in (response.json()['items']):
+        print(p)
+        print(p['patientName'])
 
-    datas = {
-        'patientIdx': mPatientIdx,
-        'contents': chart_content_ent.get(),
-        'recordedDate': final_charting_time,
-        'recordedByName': recordedByName,
-        'recordedById': recordedById
-    }
+    cnt = 0
+    for url in patient_url_list[0:0]:
+        response = session.get(url)
+        soup = BeautifulSoup(response.text, "html.parser")
 
-    url = patient_url_list[0] + "/api/memoData"
+        mPatientIdx = soup.find("input", {"id": "patientIdx"}).get('value')
+        recordedByName = soup.find("input", {"class": "form-control"}).get('value')
+        recordedById = id_ent.get()
 
-    response = session.post(url, params=json.dumps(datas))
-    # print(response.request.__getattribute__("params"))
-    print(response.url)
+        datas = {
+            'patientIdx': mPatientIdx,
+            'contents': chart_content_ent.get(),
+            'recordedDate': final_charting_time,
+            'recordedByName': recordedByName,
+            'recordedById': recordedById
+        }
 
-    if check_chart(soup):
-        #차팅보내기
-        print("차팅없으니까 차팅해야됨")
-    else:
-        print("차팅 있으니까 패쑤~~")
+        request_url = "https://hcms.mohw.go.kr/clinic/api/memoData"
+
+        if check_chart(soup):
+            #차팅보내기
+            response = session.post(request_url, params=datas)
+            print("차팅없으니까 차팅해야됨")
+        else:
+            print("차팅 있으니까 패쑤~~")
 
 
 '''
