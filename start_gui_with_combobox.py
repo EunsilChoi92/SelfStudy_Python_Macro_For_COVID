@@ -58,7 +58,6 @@ id_label.pack()
 
 # 아이디 입력칸
 id_ent = Entry(win)
-id_ent.insert(0, "ces1") # 지울거
 id_ent.pack()
 
 # 비밀번호 라벨
@@ -68,7 +67,6 @@ pw_label.pack()
 
 # 비밀번호 입력칸
 pw_ent = Entry(win)
-pw_ent.insert(0, "1q2w3e4r!")   # 지울거
 pw_ent.pack()
 
 
@@ -116,7 +114,7 @@ year_var = StringVar(win)
 
 chart_time_year = Combobox(win)
 chart_time_year.config(values=year_list)
-chart_time_year.insert(0, '2022') # 지울거
+chart_time_year.insert(0, '연도')
 chart_time_year.pack()
 
 # 차팅 시간 콤보박스(월)
@@ -126,14 +124,14 @@ month_var = StringVar(win)
 chart_time_month = Combobox(win)
 chart_time_month.config(values=month_list)
 chart_time_month.bind("<<ComboboxSelected>>", change_day_combobox)
-chart_time_month.insert(0, '02') # 지울거
+chart_time_month.insert(0, '월')
 chart_time_month.pack()
 
 # 차팅 시간 콤보박스(일)
 day_var = StringVar(win)
 
 chart_time_day = Combobox(win)
-chart_time_day.insert(0, '08')  # 지울거
+chart_time_day.insert(0, '일')
 chart_time_day.pack()
 
 # 차팅 시간 콤보박스(시)
@@ -142,7 +140,7 @@ hour_var = StringVar(win)
 
 chart_time_hour = Combobox(win)
 chart_time_hour.config(values=hour_list)
-chart_time_hour.insert(0, '19') # 지울거
+chart_time_hour.insert(0, '시')
 chart_time_hour.pack()
 
 # 차팅 시간 콤보박스(분)
@@ -150,7 +148,7 @@ minute_var = StringVar(win)
 
 chart_time_minute = Combobox(win)
 chart_time_minute.config(values=minute_list)
-chart_time_minute.insert(0, '00')    # 지울거
+chart_time_minute.insert(0, '분')
 chart_time_minute.pack()
 
 
@@ -165,7 +163,6 @@ chart_content_ent = Entry(win)
 chart_content_ent.pack()
 
 
-
 # 로그인 함수
 def login():
     id = id_ent.get()
@@ -176,7 +173,6 @@ def login():
     driver.get("https://hcms.mohw.go.kr")
     driver.implicitly_wait(10)
 
-    # print(check_exists_by_xpath("//label[@id='msg']"))
     xpath_send_keys("//input[@id='id']", id)
     xpath_send_keys("//input[@id='password']", pw)
     xpath_click("//button[@id='submitBtn']")
@@ -215,6 +211,7 @@ def get_patient_list():
 
     return patient_url_list
 
+# 세션 정보 변경
 def update_session():
     session = requests.Session()
     headers = {
@@ -226,6 +223,7 @@ def update_session():
         session.cookies.update(c)
     return session
 
+# 입력한 차팅 시간과 대조해서 이미 있으면 False, 없으면 True return
 def check_chart(soup):
     chart_table = soup.find("table", {'id': 'memoDataTable'})
     chart_td = chart_table.find_all("td")
@@ -244,15 +242,15 @@ def chart():
     final_charting_time = make_charting_time()
 
     session = update_session()
+    # response = session.get("https://hcms.mohw.go.kr/clinic/api/state?size=1000")
 
-    response = session.get("https://hcms.mohw.go.kr/clinic/api/state")
-
-    for p in (response.json()['items']):
-        print(p)
-        print(p['patientName'])
-
-    cnt = 0
-    for url in patient_url_list[0:0]:
+    cnt = 0 # 전체 환자수
+    charted_cnt = 0 # 차팅한 환자수
+    not_charted_cnt = 0 # 차팅 안 한 환자수
+    not_charted_list = [] # 차팅 안 한 환자 리스트
+    
+    # 각 url별로 data를 받아 post로 data 전송
+    for url in patient_url_list:
         response = session.get(url)
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -262,64 +260,41 @@ def chart():
 
         datas = {
             'patientIdx': mPatientIdx,
-            'contents': chart_content_ent.get(),
+            #'contents': chart_content_ent.get(),
+            'contents': "체온 측정 후 앱에 등록함.\n특이 호소 없음.",
             'recordedDate': final_charting_time,
             'recordedByName': recordedByName,
             'recordedById': recordedById
         }
 
+        roomId = soup.find("input", {"id": "roomId"}).get('value')
+        pName = soup.find("input", {"id": "pName"}).get('value')
+
         request_url = "https://hcms.mohw.go.kr/clinic/api/memoData"
+        p = {'roomId':roomId, 'pName':pName}
 
         if check_chart(soup):
-            #차팅보내기
-            response = session.post(request_url, params=datas)
-            print("차팅없으니까 차팅해야됨")
+            #response = session.post(request_url, params=datas)
+            charted_cnt += 1
         else:
-            print("차팅 있으니까 패쑤~~")
+            not_charted_cnt += 1
+            not_charted_list.append(p)
+        cnt += 1
 
+    show_cnt("재원환자수", cnt)
+    show_cnt("차팅한 환자수", charted_cnt)
+    show_cnt("차팅 안 한 환자수", not_charted_cnt)
 
-'''
-    # 리스트에 저장된 url로 이동 후 차팅
-    cnt = 0     # 카운트(나중에 재원 환자 수와 맞는지 확인할 것)
-    patient_list_not_charted = []  # 차팅하지 않은 환자 이름 리스트
+    str = ""
+    for p in not_charted_list:
+        str += "{}호 {}\n".format(p['roomId'], p['pName'])
 
-    for url in patient_url_list:
-        driver.get(url)
+    show_cnt("차팅 안 한 환자", ("\n" + str))
 
-        # 차팅 여부 확인
-        charting_time = "2022-02-07 19:00"  # ex) 2022-02-02 19:00
-        check = True
-
-        chart_table = driver.find_element(By.ID, "memoDataTable")   # 차트 테이블
-        child_td = chart_table.find_elements(By.TAG_NAME, "td")     # 차트 테이블의 자식 요소들 중에서 td 태그를 가진 요소들
-
-        # 같은 차팅 시간이 이미 존재하면 False로 바뀜
-        for td in child_td:
-            text = td.get_attribute('innerText')
-            if text == charting_time:
-                check = False
-                break
-
-        if check:
-            # 차팅 내용 입력
-            charting = "체온 측정 후 앱에 등록함.\n특이 호소 없음."
-            xpath_send_keys("//textarea[@id='memoContent']", charting)
-
-            # 차팅 시간
-            xpath_send_keys("//input[@id='eventDateTime3']", charting_time)
-
-            # 차팅 저장 -------주의!!!!!!!_----------
-            xpath_click("//button[@id='medicalMemo']")
-
-            # 카운트
-            cnt += 1
-
-        else:
-            # 차팅하지 않은 환자 주소 추가
-            patient_list_not_charted.append(url)
-
-        time.sleep(2)
-'''
+def show_cnt(text1, text2):
+    label = Label(win)
+    label.config(text="{} : {}".format(text1, text2))
+    label.pack()
 
 
 # 입력 버튼
