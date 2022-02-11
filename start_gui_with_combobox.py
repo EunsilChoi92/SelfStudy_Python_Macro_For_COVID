@@ -1,3 +1,5 @@
+import tkinter
+
 import requests
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -8,6 +10,8 @@ from tkinter.ttk import *
 import time
 import os, sys
 from bs4 import BeautifulSoup
+import threading
+
 import json
 
 
@@ -48,26 +52,34 @@ def xpath_click(xpath):
 
 
 win = Tk()
-win.geometry("400x800")
-win.option_add("*Font", "궁서 20")
+win.geometry("400x400")
+win.resizable(width=False, height=False)
+win.title("생치 일괄 차팅 넣기")
+win.option_add("*Font", "고딕 15")
+
+# 탑프레임 - 아이디, 비밀번호
+top_frame = Frame(win)
+top_frame.pack(pady=20, side="top")
 
 # 아이디 라벨
-id_label = Label(win)
+id_label = Label(top_frame)
 id_label.config(text="ID")
-id_label.pack()
+id_label.config(width=5)
+id_label.grid(pady=5, row=1, column=1)
 
 # 아이디 입력칸
-id_ent = Entry(win)
-id_ent.pack()
+id_ent = Entry(top_frame)
+id_ent.grid(row=1, column=2)
 
 # 비밀번호 라벨
-pw_label = Label(win)
+pw_label = Label(top_frame)
 pw_label.config(text="PW")
-pw_label.pack()
+pw_label.config(width=5)
+pw_label.grid(row=2, column=1)
 
 # 비밀번호 입력칸
-pw_ent = Entry(win)
-pw_ent.pack()
+pw_ent = Entry(top_frame)
+pw_ent.grid(row=2, column=2)
 
 
 # combobox에 추가할 list들
@@ -103,63 +115,81 @@ def change_day_combobox(*args):
         change_day_list(30)
     chart_time_day.config(values=day_list)
 
+# 미들 프레임 - 차팅 시간
+middle_frame = Frame(win)
+
+middle_frame_1 = Frame(middle_frame)
+middle_frame_1.pack(side="top")
+middle_frame_2 = Frame(middle_frame)
+middle_frame_2.pack(side="top")
+
+middle_frame.pack(pady=5, side="top")
 
 # 차팅 시간 라벨 ex) "2022-02-06 19:00"
-chart_time_label = Label(win)
+chart_time_label = Label(middle_frame_1)
 chart_time_label.config(text="차팅시간")
-chart_time_label.pack()
+chart_time_label.pack(pady=5)
 
 # 차팅 시간 콤보박스(연도)
-year_var = StringVar(win)
+year_var = StringVar(middle_frame)
 
-chart_time_year = Combobox(win)
+chart_time_year = Combobox(middle_frame_2)
 chart_time_year.config(values=year_list)
+chart_time_year.config(width=6)
 chart_time_year.insert(0, '연도')
-chart_time_year.pack()
+chart_time_year.grid(row=2, columnspan=2)
 
 # 차팅 시간 콤보박스(월)
 add_list(month_list, 1, 12)
-month_var = StringVar(win)
+month_var = StringVar(middle_frame_2)
 
-chart_time_month = Combobox(win)
+chart_time_month = Combobox(middle_frame_2)
 chart_time_month.config(values=month_list)
+chart_time_month.config(width=3)
 chart_time_month.bind("<<ComboboxSelected>>", change_day_combobox)
 chart_time_month.insert(0, '월')
-chart_time_month.pack()
+chart_time_month.grid(padx=3, row=2, column=3)
 
 # 차팅 시간 콤보박스(일)
-day_var = StringVar(win)
+day_var = StringVar(middle_frame_2)
 
-chart_time_day = Combobox(win)
+chart_time_day = Combobox(middle_frame_2)
+chart_time_day.config(width=3)
 chart_time_day.insert(0, '일')
-chart_time_day.pack()
+chart_time_day.grid(row=2, column=4)
 
 # 차팅 시간 콤보박스(시)
 add_list(hour_list, 0, 23)
-hour_var = StringVar(win)
+hour_var = StringVar(middle_frame_2)
 
-chart_time_hour = Combobox(win)
+chart_time_hour = Combobox(middle_frame_2)
 chart_time_hour.config(values=hour_list)
+chart_time_hour.config(width=3)
 chart_time_hour.insert(0, '시')
-chart_time_hour.pack()
+chart_time_hour.grid(padx=3, row=2, column=5)
 
 # 차팅 시간 콤보박스(분)
-minute_var = StringVar(win)
+minute_var = StringVar(middle_frame_2)
 
-chart_time_minute = Combobox(win)
+chart_time_minute = Combobox(middle_frame_2)
 chart_time_minute.config(values=minute_list)
+chart_time_minute.config(width=3)
 chart_time_minute.insert(0, '분')
-chart_time_minute.pack()
+chart_time_minute.grid(row=2, column=6)
 
+
+# bottom_frame - 차팅내용
+bottom_frame = Frame(win)
+bottom_frame.pack(pady=15, side="top")
 
 # 차팅 내용 라벨
-chart_content_label = Label(win)
+chart_content_label = Label(bottom_frame)
 chart_content_label.config(text="차팅내용")
-chart_content_label.pack()
-
+chart_content_label.pack(pady=3)
 
 # 차팅 내용 입력칸
-chart_content_ent = Entry(win)
+chart_content_ent = Text(bottom_frame, wrap=WORD)
+chart_content_ent.config(width=26, height=5)
 chart_content_ent.pack()
 
 
@@ -260,8 +290,7 @@ def chart():
 
         datas = {
             'patientIdx': mPatientIdx,
-            #'contents': chart_content_ent.get(),
-            'contents': "체온 측정 후 앱에 등록함.\n특이 호소 없음.",
+            'contents': chart_content_ent.get(1.0, "end"),
             'recordedDate': final_charting_time,
             'recordedByName': recordedByName,
             'recordedById': recordedById
@@ -274,7 +303,7 @@ def chart():
         p = {'roomId':roomId, 'pName':pName}
 
         if check_chart(soup):
-            #response = session.post(request_url, params=datas)
+            # chart_response = session.post(request_url, params=datas)
             charted_cnt += 1
         else:
             not_charted_cnt += 1
@@ -287,20 +316,30 @@ def chart():
 
     str = ""
     for p in not_charted_list:
-        str += "{}호 {}\n".format(p['roomId'], p['pName'])
+        str += "{}호 {} ".format(p['roomId'], p['pName'])
+        if not_charted_list.index(p) % 2 != 0:
+            str += "\n"
 
     show_cnt("차팅 안 한 환자", ("\n" + str))
+
 
 def show_cnt(text1, text2):
     label = Label(win)
     label.config(text="{} : {}".format(text1, text2))
     label.pack()
 
+# 프로그램을 실행하는 동안 응답없음을 막기 위해 스레드 사용
+def th():
+    th = threading.Thread(target=chart)
+    th.daemon = True
+    th.start()
+
 
 # 입력 버튼
-login_btn = Button(win)
+login_btn = tkinter.Button(win)
 login_btn.config(text="입력")
-login_btn.config(command=chart)
+login_btn.config(width=10, height=1)
+login_btn.config(command=th)
 login_btn.pack()
 
 win.mainloop()
