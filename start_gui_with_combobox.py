@@ -14,7 +14,7 @@ import threading
 
 
 # pyinstaller
-# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui_with_optionmenu.py
+# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui_with_combobox.py
 # onefile은 에러 자주 나서 생략하는 게 좋을듯
 
 
@@ -266,9 +266,10 @@ def login():
     else:
         login_error_label.grid_forget()
         result = True
+        login_btn.pack_forget()
+        loading_label.pack()
 
-    login_btn.pack_forget()
-    loading_label.pack()
+
 
     return result
 
@@ -336,34 +337,68 @@ def check_chart(soup):
 def show_cnt(text1, text2):
     label = Label(bottom_frame)
     label.config(text="{} : {}".format(text1, text2))
+    label.config(font="돋움 13")
     label.pack(pady=2)
 
 
 # 결과 보여주기
-def show_result(cnt, charted_cnt, not_charted_cnt, not_charted_list):
-    win.geometry("400x650")
+def show_result(cnt, charted_cnt, not_charted_cnt, charted_list, not_charted_list):
+    win.geometry("400x670")
 
     show_cnt("재원환자수", cnt)
     show_cnt("차팅한 환자수", charted_cnt)
     show_cnt("차팅 안 한 환자수", not_charted_cnt)
 
-    # bottom_frame 안에 frame 하나 더 만들기
-    f = Frame(bottom_frame)
-    f.pack(side="bottom", pady=3)
+    # bottom_frame 안에 frame 하나 더 만들기 = bottom_frame_list
+    # bottom_frame_list 안에 차팅한 환자 목록과 차팅 안 한 환자 목록을 보여주는 frame 두개가 들어있음
+    bottom_frame_list = Frame(bottom_frame)
+    bottom_frame_list.pack(side="bottom", pady=5)
+    
+    # 차팅한 환자 목록 frame (라벨 + 스크롤)
+    charted_f = Frame(bottom_frame)
+    charted_f.pack(side="left", padx=2, pady=3)
 
-    l1 = Label(f)
-    l1.config(text="차팅 안 한 환자 목록")
-    l1.pack()
+    charted_l = Label(charted_f)
+    charted_l.config(text="차팅함")
+    charted_l.config(font="돋움 15 bold")
+    charted_l.pack()
 
     # 스크롤바 생성
-    scrollbar = Scrollbar(f)
+    scrollbar = Scrollbar(charted_f)
     scrollbar.pack(side="right", fill="y")
 
     # 환자 목록 listbox 생성
-    listbox = Listbox(f)
+    listbox = Listbox(charted_f)
     listbox.config(selectmode="extended")
     listbox.config(font="고딕, 12")
-    listbox.config(width=25, height=8)
+    listbox.config(width=13, height=8)
+    listbox.config(yscrollcommand=scrollbar.set)
+
+    for p in charted_list:
+        listbox.insert(END, "{}호 {} ".format(p['roomId'], p['pName']))
+
+    listbox.pack(side="left", pady=3)
+    scrollbar.config(command=listbox.yview)
+
+
+    # 차팅 안 한 환자 목록 frame (라벨 + 스크롤)
+    not_charted_f = Frame(bottom_frame)
+    not_charted_f.pack(side="right", padx=2, pady=3)
+
+    not_charted_l = Label(not_charted_f)
+    not_charted_l.config(text="차팅 안 함")
+    not_charted_l.config(font="돋움 15 bold")
+    not_charted_l.pack()
+
+    # 스크롤바 생성
+    scrollbar = Scrollbar(not_charted_f)
+    scrollbar.pack(side="right", fill="y")
+
+    # 환자 목록 listbox 생성
+    listbox = Listbox(not_charted_f)
+    listbox.config(selectmode="extended")
+    listbox.config(font="고딕, 12")
+    listbox.config(width=13, height=8)
     listbox.config(yscrollcommand=scrollbar.set)
 
     for p in not_charted_list:
@@ -378,9 +413,7 @@ def chart():
     if check_all_inserted():
         # login() 로그인이 성공하면 True return, 실패하면 False return
         if login():
-            print("로그인 완")
             patient_url_list = get_patient_list()
-            print("환자목록 가졍괴 완")
 
             global final_charting_time
             final_charting_time = make_charting_time()
@@ -396,6 +429,7 @@ def chart():
             cnt = 0  # 전체 환자수
             charted_cnt = 0  # 차팅한 환자수
             not_charted_cnt = 0  # 차팅 안 한 환자수
+            charted_list = [] # 차팅한 환자 리스트
             not_charted_list = []  # 차팅 안 한 환자 리스트
 
             # 각 url별로 data를 받아 post로 data 전송
@@ -422,15 +456,16 @@ def chart():
                 p = {'roomId': roomId, 'pName': pName}
 
                 if check_chart(soup):
-                    # chart_response = session.post(request_url, params=datas)
+                    chart_response = session.post(request_url, params=datas)
                     charted_cnt += 1
+                    charted_list.append(p)
                 else:
                     not_charted_cnt += 1
                     not_charted_list.append(p)
                 cnt += 1
 
             loading_label.pack_forget()
-            show_result(cnt, charted_cnt, not_charted_cnt, not_charted_list)
+            show_result(cnt, charted_cnt, not_charted_cnt, charted_list, not_charted_list)
 
             restart_btn.pack()
 
@@ -448,7 +483,7 @@ def restart():
 
 # 차팅중 라벨
 loading_label = Label(bottom_frame)
-loading_label.config(text="차팅중... \n인터넷 창이 닫힙니다")
+loading_label.config(text="로딩중... \n인터넷 창이 닫힙니다")
 loading_label.config(justify="center")
 
 # 버튼 프레임
