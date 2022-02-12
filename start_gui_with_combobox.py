@@ -49,11 +49,17 @@ def xpath_click(xpath):
     element.click()
 
 
+bagic_geometry = "400x400"
+middle_geometry = "400x430"
+long_geometry = "400x670"
+
+
 win = Tk()
-win.geometry("400x400")
+win.geometry(bagic_geometry)
 win.resizable(width=False, height=False)
 win.title("생치 일괄 차팅 넣기")
 win.option_add("*Font", "돋움 15")
+win.wm_attributes("-topmost", 1)
 
 # top_frame - 아이디, 비밀번호
 top_frame = Frame(win)
@@ -216,7 +222,7 @@ bottom_frame.pack(side="top")
 # 모든 위젯 값이 제대로 들어갔는지 확인
 def check_all_inserted():
     if (id_ent.get() == "") or (pw_ent.get() == "") or (chart_time_year.get() == "연도") or (chart_time_month.get() == "월") or (chart_time_day.get() == "일") or (chart_time_hour.get() == "시") or (chart_time_minute.get() == "분") or (chart_content_ent.get(1.0, "end") == "\n"):
-        win.geometry("400x430")
+        win.geometry(middle_geometry)
         label = Label(middle_frame_content)
         label.config(text="모든 항목을 다 입력해주세요")
         label.config(foreground="red")
@@ -225,12 +231,15 @@ def check_all_inserted():
 
         time.sleep(2)
         label.pack_forget()
-        win.geometry("400x400")
+
+        if len(login_error_label.grid_info()) == 0:
+            win.geometry(bagic_geometry)
+        else:
+            win.geometry(middle_geometry)
         result = False
     else:
         result = True
     return result
-
 
 
 # 아이디와 비밀번호가 정확한지 확인
@@ -259,7 +268,7 @@ def login():
     result = False
     # 에러 메세지가 있으면
     if check_id_pw():
-        win.geometry("400x430")
+        win.geometry(middle_geometry)
         login_error_label.grid(row=3, columnspan=3)
         time.sleep(1)
         driver.quit()
@@ -268,8 +277,6 @@ def login():
         result = True
         login_btn.pack_forget()
         loading_label.pack()
-
-
 
     return result
 
@@ -343,7 +350,7 @@ def show_cnt(text1, text2):
 
 # 결과 보여주기
 def show_result(cnt, charted_cnt, not_charted_cnt, charted_list, not_charted_list):
-    win.geometry("400x670")
+    win.geometry(long_geometry)
 
     show_cnt("재원환자수", cnt)
     show_cnt("차팅한 환자수", charted_cnt)
