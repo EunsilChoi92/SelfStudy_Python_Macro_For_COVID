@@ -83,6 +83,7 @@ pw_label.grid(pady=5, row=2, column=1)
 
 # 비밀번호 입력칸
 pw_ent = Entry(top_frame)
+pw_ent.config(show="*")
 pw_ent.grid(row=2, column=2)
 
 # 로그인 에러 메시지 라벨
@@ -200,6 +201,14 @@ chart_time_minute.set("분")
 chart_time_minute.grid(row=2, column=6)
 
 
+def make_charting_time():
+    return "{}-{}-{} {}:{}".format(chart_time_year.get()
+                                   , chart_time_month.get()
+                                   , chart_time_day.get()
+                                   , chart_time_hour.get()
+                                   , chart_time_minute.get())
+
+
 # middle_frame_content - 차팅내용
 middle_frame_content = Frame(win)
 middle_frame_content.pack(pady=15, side="top")
@@ -260,10 +269,12 @@ def login():
 
     driver.get("https://hcms.mohw.go.kr")
     driver.implicitly_wait(5)
+    time.sleep(0.5)
 
     xpath_send_keys("//input[@id='id']", id)
     xpath_send_keys("//input[@id='password']", pw)
     xpath_click("//button[@id='submitBtn']")
+    time.sleep(0.5)
 
     result = False
     # 에러 메세지가 있으면
@@ -281,14 +292,7 @@ def login():
     return result
 
 
-def make_charting_time():
-    return "{}-{}-{} {}:{}".format(chart_time_year.get()
-                                   , chart_time_month.get()
-                                   , chart_time_day.get()
-                                   , chart_time_hour.get()
-                                   , chart_time_minute.get())
-
-def get_patient_list():
+def get_patient_list(session):
     # 환자 리스트로 이동
     driver.get('https://hcms.mohw.go.kr/clinic/state')
     driver.implicitly_wait(3)
@@ -300,18 +304,24 @@ def get_patient_list():
     driver.implicitly_wait(3)
     time.sleep(1)
 
+    response = session.get("https://hcms.mohw.go.kr/clinic/api/state?size=1000")
+
+    return response.json()['items']
+
+    '''
     # 환자 리스트 모두 가져오기
     patient_list_class = "patients-stats"
     patient_list = driver.find_elements(By.CLASS_NAME, patient_list_class)
 
     # 환자 리스트에서 환자번호 추출해서 각 환자의 개인차트 url을 리스트에 저장
-    patient_url_list = []
+    patient_info_list = []
     for element_patient in patient_list:
         patient_url = element_patient.get_attribute("data-url")[1:]
         final_url = "https://hcms.mohw.go.kr/clinic" + patient_url + "&refererPage=1#medicalMemoSection"
-        patient_url_list.append(final_url)
-
-    return patient_url_list
+        patient_info_list.append(final_url)
+        
+    return patient_info_list
+    '''
 
 # 세션 정보 변경
 def update_session():
@@ -420,13 +430,12 @@ def chart():
     if check_all_inserted():
         # login() 로그인이 성공하면 True return, 실패하면 False return
         if login():
-            patient_url_list = get_patient_list()
+            session = update_session()
 
             global final_charting_time
             final_charting_time = make_charting_time()
 
-            session = update_session()
-            # response = session.get("https://hcms.mohw.go.kr/clinic/api/state?size=1000")
+            patient_info_list = get_patient_list(session)
 
             driver.quit()
 
@@ -440,11 +449,13 @@ def chart():
             not_charted_list = []  # 차팅 안 한 환자 리스트
 
             # 각 url별로 data를 받아 post로 data 전송
-            for url in patient_url_list:
+            for info in patient_info_list:
+                mPatientIdx = str(info['patientIdx'])
+
+                url = "https://hcms.mohw.go.kr/clinic/info?patientIdx=" + mPatientIdx + "&refererPage=1#medicalMemoSection"
                 response = session.get(url)
                 soup = BeautifulSoup(response.text, "html.parser")
 
-                mPatientIdx = soup.find("input", {"id": "patientIdx"}).get('value')
                 recordedByName = soup.find("input", {"class": "form-control"}).get('value')
                 recordedById = id_ent.get()
 
@@ -456,14 +467,14 @@ def chart():
                     'recordedById': recordedById
                 }
 
-                roomId = soup.find("input", {"id": "roomId"}).get('value')
-                pName = soup.find("input", {"id": "pName"}).get('value')
+                roomId = info['roomNumber']
+                pName = info['patientName']
 
                 request_url = "https://hcms.mohw.go.kr/clinic/api/memoData"
                 p = {'roomId': roomId, 'pName': pName}
 
                 if check_chart(soup):
-                    chart_response = session.post(request_url, params=datas)
+                    #chart_response = session.post(request_url, params=datas)
                     charted_cnt += 1
                     charted_list.append(p)
                 else:
@@ -501,7 +512,7 @@ button_frame.pack(pady=5, side="top")
 login_btn = tkinter.Button(button_frame)
 login_btn.config(text="입력")
 login_btn.config(width=10, height=1)
-login_btn.config(command=th)
+login_btn.config(command=chart)
 login_btn.pack()
 
 # restart 버튼
