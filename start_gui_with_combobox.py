@@ -7,15 +7,14 @@ import tkinter
 from tkinter import *
 from tkinter.ttk import *
 import time
+import os
 import os, sys
 from bs4 import BeautifulSoup
 import threading
 
 
 
-# pyinstaller
-# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui_with_combobox.py
-# onefile은 에러 자주 나서 생략하는 게 좋을듯
+# pyinstaller -w -F --icon=koreaLogo.ico --add-binary "chromedriver.exe;." --add-data="koreaLogo.ico;." start_gui_with_combobox.py
 
 
 # chromedriver 실행
@@ -60,6 +59,11 @@ win.resizable(width=False, height=False)
 win.title("생치 일괄 차팅 넣기")
 win.option_add("*Font", "돋움 15")
 win.wm_attributes("-topmost", 1)
+
+# 작업표시줄 아이콘 변경
+path = os.path.join(os.path.dirname(__file__), 'koreaLogo.ico')
+if os.path.isfile(path):
+    win.iconbitmap(path)
 
 # top_frame - 아이디, 비밀번호
 top_frame = Frame(win)
