@@ -439,7 +439,6 @@ def chart():
 
             driver.quit()
 
-            ##여기!!
             loading_label.config(text="차팅중...")
 
             cnt = 0  # 전체 환자수
@@ -512,7 +511,7 @@ button_frame.pack(pady=5, side="top")
 login_btn = tkinter.Button(button_frame)
 login_btn.config(text="입력")
 login_btn.config(width=10, height=1)
-login_btn.config(command=chart)
+login_btn.config(command=th)
 login_btn.pack()
 
 # restart 버튼
