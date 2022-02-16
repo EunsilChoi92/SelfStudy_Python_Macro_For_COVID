@@ -1,1 +1,1 @@
-# SelfStudy_Python_Macro_For_COVID
+# 생활치료센터 일괄 차팅 넣기 매크로
