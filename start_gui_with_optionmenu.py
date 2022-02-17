@@ -199,12 +199,12 @@ login_btn.pack()
 #
 #
 # # ID 입력
-# id = "ces1"
+# id = "아이디"
 # xpath_send_keys("//input[@id='id']", id)
 #
 #
 # # Password 입력
-# pw = "1q2w3e4r!"
+# pw = "비번"
 # xpath_send_keys("//input[@id='password']", pw)
 # time.sleep(0.5)
 #
