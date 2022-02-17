@@ -27,13 +27,13 @@ def run_cd():
         driver = webdriver.Chrome()
 
 
-# 어떤 요소가 존재하는지 확인하기 위한 함수
-def check_exists_by_xpath(xpath):
-    try:
-        driver.find_element(By.XPATH, xpath)
-    except NoSuchElementException:
-        return False
-    return True
+# 어떤 요소가 존재하는지 확인하기 위한 함수(사용 안 함)
+# def check_exists_by_xpath(xpath):
+#     try:
+#         driver.find_element(By.XPATH, xpath)
+#     except NoSuchElementException:
+#         return False
+#     return True
 
 
 # xpath로 요소 찾아서 텍스트 입력하는 함수
@@ -96,6 +96,7 @@ login_error_label.config(text="아이디나 비밀번호를 확인해주세요")
 login_error_label.config(font="돋움 10")
 login_error_label.config(foreground="red")
 
+
 # combobox에 추가할 list들
 year_list = ["2022"]
 month_list = []
@@ -134,7 +135,7 @@ def change_day_combobox(*args):
     chart_time_day.config(values=day_list)
 
 
-# middle_frame - 차팅 시간
+# middle_frame_time - 차팅 시간(시간 라벨 + 시간 콤보박스)
 middle_frame_time = Frame(win)
 middle_frame_time.pack(pady=5, side="top")
 
@@ -205,14 +206,6 @@ chart_time_minute.set("분")
 chart_time_minute.grid(row=2, column=6)
 
 
-def make_charting_time():
-    return "{}-{}-{} {}:{}".format(chart_time_year.get()
-                                   , chart_time_month.get()
-                                   , chart_time_day.get()
-                                   , chart_time_hour.get()
-                                   , chart_time_minute.get())
-
-
 # middle_frame_content - 차팅내용
 middle_frame_content = Frame(win)
 middle_frame_content.pack(pady=15, side="top")
@@ -227,14 +220,14 @@ chart_content_ent = Text(middle_frame_content, wrap=WORD)
 chart_content_ent.config(width=26, height=5)
 chart_content_ent.pack()
 
-# bottom_frame - 결과창 프레임(재원환자수, 차팅한 환자수, 차팅 안 한 환자수, 차팅 안 한 환자목록)
+# bottom_frame - 결과창 프레임(재원환자수, 차팅한 환자수, 차팅 안 한 환자수, 차팅 한 환자목록, 차팅 안 한 환자목록)
 bottom_frame = Frame(win)
 bottom_frame.pack(side="top")
 
 
 # 모든 위젯 값이 제대로 들어갔는지 확인
 def check_all_inserted():
-    if (id_ent.get() == "") or (pw_ent.get() == "") or (chart_time_year.get() == "연도") or (chart_time_month.get() == "월") or (chart_time_day.get() == "일") or (chart_time_hour.get() == "시") or (chart_time_minute.get() == "분") or (chart_content_ent.get(1.0, "end") == "\n"):
+    if (id_ent.get() == "") or (pw_ent.get() == "") or (chart_time_year.get() == "연도") or (chart_time_month.get() == "월") or (chart_time_day.get() == "일") or (chart_time_hour.get() == "시") or (chart_time_minute.get() == "분") or (chart_content_ent.get(1.0, "end") == "\n") or (chart_content_ent.get(1.0, "end") == ""):
         win.geometry(middle_geometry)
         label = Label(middle_frame_content)
         label.config(text="모든 항목을 다 입력해주세요")
@@ -255,11 +248,10 @@ def check_all_inserted():
     return result
 
 
-# 아이디와 비밀번호가 정확한지 확인
+# 아이디와 비밀번호가 정확한지 확인(로그인에 실패하면 url이 바뀌지 않음)
 def check_id_pw():
-    xpath = ("//label[@class='error']")
-    error_label_list = driver.find_elements(By.XPATH, xpath)
-    if len(error_label_list) != 0:
+    result_url = driver.current_url
+    if result_url == "https://hcms.mohw.go.kr/login/staff":
         return True
     return False
 
@@ -280,22 +272,21 @@ def login():
     xpath_click("//button[@id='submitBtn']")
     time.sleep(0.5)
 
-    result = False
-    # 에러 메세지가 있으면
+    # 에러 메세지가 있으면 로그인 에러 라벨 출력
     if check_id_pw():
         win.geometry(middle_geometry)
         login_error_label.grid(row=3, columnspan=3)
         time.sleep(1)
         driver.quit()
+        return False
     else:
         login_error_label.grid_forget()
-        result = True
         login_btn.pack_forget()
         loading_label.pack()
+        return True
 
-    return result
 
-
+# 환자 정보 가져오기
 def get_patient_list(session):
     # 환자 리스트로 이동
     driver.get('https://hcms.mohw.go.kr/clinic/state')
@@ -312,20 +303,6 @@ def get_patient_list(session):
 
     return response.json()['items']
 
-    '''
-    # 환자 리스트 모두 가져오기
-    patient_list_class = "patients-stats"
-    patient_list = driver.find_elements(By.CLASS_NAME, patient_list_class)
-
-    # 환자 리스트에서 환자번호 추출해서 각 환자의 개인차트 url을 리스트에 저장
-    patient_info_list = []
-    for element_patient in patient_list:
-        patient_url = element_patient.get_attribute("data-url")[1:]
-        final_url = "https://hcms.mohw.go.kr/clinic" + patient_url + "&refererPage=1#medicalMemoSection"
-        patient_info_list.append(final_url)
-        
-    return patient_info_list
-    '''
 
 # 세션 정보 변경
 def update_session():
@@ -340,12 +317,21 @@ def update_session():
     return session
 
 
+# 차팅 시간 조합
+def make_charting_time():
+    return "{}-{}-{} {}:{}".format(chart_time_year.get()
+                                   , chart_time_month.get()
+                                   , chart_time_day.get()
+                                   , chart_time_hour.get()
+                                   , chart_time_minute.get())
+
+
 # 입력한 차팅 시간과 대조해서 이미 있으면 False, 없으면 True return
 def check_chart(soup):
     chart_table = soup.find("table", {'id': 'memoDataTable'})
     chart_tr = chart_table.find_all("tr")
     for tr in chart_tr:
-        # 각 tr의 첫번쨰 td = 처리일시(차팅시간)
+        # 각 tr의 첫번째 td = 처리일시(차팅시간)
         chart_td = tr.find_all()
         first_td = chart_td[0]
         text = first_td.get_text()
@@ -362,6 +348,35 @@ def show_cnt(text1, text2):
     label.pack(pady=2)
 
 
+# 차팅한 환자와 차팅 안 한 환자 목록 보여주기
+def show_patient_list_frame(bottom_frame_list, charted_or_not, direction, list):
+    # 차팅한 환자 또는 차팅 안 한 환자 목록 프레임
+    frame = Frame(bottom_frame_list)
+    frame.pack(side=direction, padx=2, pady=3)
+
+    label = Label(frame)
+    label.config(text=charted_or_not)
+    label.config(font="돋움 15 bold")
+    label.pack()
+
+    # 스크롤바 생성
+    scrollbar = Scrollbar(frame)
+    scrollbar.pack(side="right", fill="y")
+
+    # 환자 목록 listbox 생성
+    listbox = Listbox(frame)
+    listbox.config(selectmode="extended")
+    listbox.config(font="고딕, 12")
+    listbox.config(width=13, height=8)
+    listbox.config(yscrollcommand=scrollbar.set)
+
+    for p in list:
+        listbox.insert(END, "{}호 {} ".format(p['roomId'], p['pName']))
+
+    listbox.pack(side="left", pady=3)
+    scrollbar.config(command=listbox.yview)
+
+
 # 결과 보여주기
 def show_result(cnt, charted_cnt, not_charted_cnt, charted_list, not_charted_list):
     win.geometry(long_geometry)
@@ -371,62 +386,12 @@ def show_result(cnt, charted_cnt, not_charted_cnt, charted_list, not_charted_lis
     show_cnt("차팅 안 한 환자수", not_charted_cnt)
 
     # bottom_frame 안에 frame 하나 더 만들기 = bottom_frame_list
-    # bottom_frame_list 안에 차팅한 환자 목록과 차팅 안 한 환자 목록을 보여주는 frame 두개가 들어있음
+    # bottom_frame_list 안에 차팅한 환자 목록과 차팅 안 한 환자 목록을 보여주는 frame 두 개가 들어있음
     bottom_frame_list = Frame(bottom_frame)
     bottom_frame_list.pack(side="bottom", pady=5)
-    
-    # 차팅한 환자 목록 frame (라벨 + 스크롤)
-    charted_f = Frame(bottom_frame)
-    charted_f.pack(side="left", padx=2, pady=3)
 
-    charted_l = Label(charted_f)
-    charted_l.config(text="차팅함")
-    charted_l.config(font="돋움 15 bold")
-    charted_l.pack()
-
-    # 스크롤바 생성
-    scrollbar = Scrollbar(charted_f)
-    scrollbar.pack(side="right", fill="y")
-
-    # 환자 목록 listbox 생성
-    listbox = Listbox(charted_f)
-    listbox.config(selectmode="extended")
-    listbox.config(font="고딕, 12")
-    listbox.config(width=13, height=8)
-    listbox.config(yscrollcommand=scrollbar.set)
-
-    for p in charted_list:
-        listbox.insert(END, "{}호 {} ".format(p['roomId'], p['pName']))
-
-    listbox.pack(side="left", pady=3)
-    scrollbar.config(command=listbox.yview)
-
-
-    # 차팅 안 한 환자 목록 frame (라벨 + 스크롤)
-    not_charted_f = Frame(bottom_frame)
-    not_charted_f.pack(side="right", padx=2, pady=3)
-
-    not_charted_l = Label(not_charted_f)
-    not_charted_l.config(text="차팅 안 함")
-    not_charted_l.config(font="돋움 15 bold")
-    not_charted_l.pack()
-
-    # 스크롤바 생성
-    scrollbar = Scrollbar(not_charted_f)
-    scrollbar.pack(side="right", fill="y")
-
-    # 환자 목록 listbox 생성
-    listbox = Listbox(not_charted_f)
-    listbox.config(selectmode="extended")
-    listbox.config(font="고딕, 12")
-    listbox.config(width=13, height=8)
-    listbox.config(yscrollcommand=scrollbar.set)
-
-    for p in not_charted_list:
-        listbox.insert(END, "{}호 {} ".format(p['roomId'], p['pName']))
-
-    listbox.pack(side="left", pady=3)
-    scrollbar.config(command=listbox.yview)
+    show_patient_list_frame(bottom_frame_list, "차팅함", "left", charted_list)
+    show_patient_list_frame(bottom_frame_list, "차팅 안 함", "right", not_charted_list)
 
 
 def chart():
@@ -438,19 +403,18 @@ def chart():
 
             global final_charting_time
             final_charting_time = make_charting_time()
-
             patient_info_list = get_patient_list(session)
 
             driver.quit()
 
             loading_label.config(text="차팅중...")
 
-            cnt = 0  # 전체 환자수
             charted_cnt = 0  # 차팅한 환자수
             not_charted_cnt = 0  # 차팅 안 한 환자수
             charted_list = [] # 차팅한 환자 리스트
             not_charted_list = []  # 차팅 안 한 환자 리스트
 
+            recordedByName = ""
             # 각 url별로 data를 받아 post로 data 전송
             for info in patient_info_list:
                 mPatientIdx = str(info['patientIdx'])
@@ -459,7 +423,9 @@ def chart():
                 response = session.get(url)
                 soup = BeautifulSoup(response.text, "html.parser")
 
-                recordedByName = soup.find("input", {"class": "form-control"}).get('value')
+                if recordedByName == "":
+                    recordedByName = soup.find("input", {"class": "form-control"}).get('value')
+                    print(recordedByName)
                 recordedById = id_ent.get()
 
                 datas = {
@@ -477,16 +443,15 @@ def chart():
                 p = {'roomId': roomId, 'pName': pName}
 
                 if check_chart(soup):
-                    #chart_response = session.post(request_url, params=datas)
+                    session.post(request_url, params=datas)
                     charted_cnt += 1
                     charted_list.append(p)
                 else:
                     not_charted_cnt += 1
                     not_charted_list.append(p)
-                cnt += 1
 
             loading_label.pack_forget()
-            show_result(cnt, charted_cnt, not_charted_cnt, charted_list, not_charted_list)
+            show_result((charted_cnt+not_charted_cnt), charted_cnt, not_charted_cnt, charted_list, not_charted_list)
 
             restart_btn.pack()
 
@@ -497,10 +462,12 @@ def th():
     th.daemon = True
     th.start()
 
-# tkinter 재시작
+
+# 재시작
 def restart():
     python = sys.executable
     os.execl(python, python, *sys.argv)
+
 
 # 차팅중 라벨
 loading_label = Label(bottom_frame)
