@@ -252,8 +252,8 @@ def check_all_inserted():
 def check_id_pw():
     result_url = driver.current_url
     if result_url == "https://hcms.mohw.go.kr/login/staff":
-        return True
-    return False
+        return False
+    return True
 
 
 # 로그인 함수
@@ -272,18 +272,18 @@ def login():
     xpath_click("//button[@id='submitBtn']")
     time.sleep(0.5)
 
-    # 에러 메세지가 있으면 로그인 에러 라벨 출력
+    # 로그인이 실패하면 로그인 에러 라벨 출력
     if check_id_pw():
+        login_error_label.grid_forget()
+        login_btn.pack_forget()
+        loading_label.pack()
+        return True
+    else:
         win.geometry(middle_geometry)
         login_error_label.grid(row=3, columnspan=3)
         time.sleep(1)
         driver.quit()
         return False
-    else:
-        login_error_label.grid_forget()
-        login_btn.pack_forget()
-        loading_label.pack()
-        return True
 
 
 # 환자 정보 가져오기
@@ -425,7 +425,7 @@ def chart():
 
                 if recordedByName == "":
                     recordedByName = soup.find("input", {"class": "form-control"}).get('value')
-                    print(recordedByName)
+
                 recordedById = id_ent.get()
 
                 datas = {
@@ -469,7 +469,7 @@ def restart():
     os.execl(python, python, *sys.argv)
 
 
-# 차팅중 라벨
+# 로딩중 라벨
 loading_label = Label(bottom_frame)
 loading_label.config(text="로딩중... \n인터넷 창이 닫힙니다")
 loading_label.config(justify="center")
