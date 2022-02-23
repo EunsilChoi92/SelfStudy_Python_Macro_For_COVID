@@ -11,7 +11,7 @@ import os, sys
 
 
 # pyinstaller
-# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui_with_optionmenu.py
+# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole second_macro_not_used.py
 # onefile은 에러 자주 나서 생략하는 게 좋을듯
 
 

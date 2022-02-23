@@ -7,14 +7,13 @@ import tkinter
 from tkinter import *
 from tkinter.ttk import *
 import time
-import os
 import os, sys
 from bs4 import BeautifulSoup
 import threading
 
 
 
-# pyinstaller -w -F --icon=koreaLogo.ico --add-binary "chromedriver.exe;." --add-data="koreaLogo.ico;." start_gui_with_combobox.py
+# pyinstaller -w -F --icon=koreaLogo.ico --add-binary "chromedriver.exe;." --add-data="koreaLogo.ico;." third_macro_complete.py
 
 
 # chromedriver 실행

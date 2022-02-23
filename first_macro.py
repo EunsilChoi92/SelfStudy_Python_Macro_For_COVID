@@ -8,7 +8,7 @@ import os, sys
 
 # pyinstaller
 # chromedriver가 컴퓨터에 있는지 확인
-# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole start_gui_with_optionmenu.py
+# Terminal에 pyinstaller --add-binary "chromedriver.exe;." --onefile --noconsole second_macro_not_used.py
 if getattr(sys, 'frozen', False):
     chromedriver_path = os.path.join(sys._MEIPASS, "chromedriver.exe")
     driver = webdriver.Chrome(chromedriver_path)
