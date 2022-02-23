@@ -46,12 +46,12 @@ time.sleep(0.5)
 
 
 # ID 입력
-id = "아이디"
+id = "ces1"
 xpath_send_keys("//input[@id='id']", id)
 
 
 # Password 입력
-pw = "비번"
+pw = "1q2w3e4r!"
 xpath_send_keys("//input[@id='password']", pw)
 time.sleep(0.5)
 
@@ -114,7 +114,7 @@ for url in patient_url_list:
     driver.get(url)
 
     # 차팅 여부 확인
-    charting_time = "2022-02-07 19:00"  # ex) 2022-02-02 19:00
+    charting_time = "2022-02-09 19:00"  # ex) 2022-02-02 19:00
     check = True
 
     chart_table = driver.find_element(By.ID, "memoDataTable")   # 차트 테이블

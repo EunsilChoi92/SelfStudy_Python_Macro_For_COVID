@@ -154,7 +154,7 @@ chart_time_label.config(text="차팅시간")
 chart_time_label.pack(pady=5)
 
 # 차팅 시간 콤보박스(연도)
-year_var = StringVar(middle_frame_time)
+year_var = StringVar(middle_frame_2)
 
 chart_time_year = Combobox(middle_frame_2)
 chart_time_year.config(values=year_list)
@@ -219,6 +219,7 @@ chart_content_label.pack(pady=3)
 chart_content_ent = Text(middle_frame_content, wrap=WORD)
 chart_content_ent.config(width=26, height=5)
 chart_content_ent.pack()
+
 
 # bottom_frame - 결과창 프레임(재원환자수, 차팅한 환자수, 차팅 안 한 환자수, 차팅 한 환자목록, 차팅 안 한 환자목록)
 bottom_frame = Frame(win)
